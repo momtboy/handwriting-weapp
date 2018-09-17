@@ -1,0 +1,18 @@
+<view class="wrapper">
+  <view class="handBtn">
+    <image catchtap="selectColorEvent" src="{{ selectColor === 'black' ? '../../images/color_black_selected.png' : '../../images/color_black.png' }}" class="{{ selectColor === 'black' ? 'color_select' : '' }} black-select" data-color="black"
+      data-color-value="#1A1A1A"></image>
+    <image catchtap="selectColorEvent" src="{{ selectColor === 'red' ? '../../images/color_red_selected.png' : '../../images/color_red.png' }}" class="{{ selectColor === 'red' ? 'color_select' : '' }} red-select" data-color="red"
+      data-color-value="#ca262a"></image>
+    <button catchtap="retDraw" class="delBtn">重写</button>
+    <!-- <button catchtap="subCanvas" class="subBtn">完成</button> -->
+  </view>
+  <view class="handCenter">
+    <canvas class="handWriting" disable-scroll="true" bindtouchstart="uploadScaleStart" bindtouchmove="uploadScaleMove"
+      bindtouchend="uploadScaleEnd" bindtap="mouseDown" canvas-id="handWriting">
+    </canvas>
+  </view>
+  <view class="handRight">
+    <view class="handTitle">手写板</view>
+  </view>
+</view>
