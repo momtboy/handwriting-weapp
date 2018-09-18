@@ -55,7 +55,7 @@ page {
 
 .delBtn {
   position: absolute;
-  top: 250rpx;
+  top: 550rpx;
   left: 0rpx;
   transform: rotate(90deg);
   color: #666;
@@ -84,25 +84,48 @@ page {
   width: 60rpx;
   height: 60rpx;
   position: absolute;
-  top: 30rpx;
+  top: 330rpx;
   left: 25rpx;
 }
 .black-select.color_select {
   width: 90rpx;
   height: 90rpx;
-  top: 30rpx;
+  top: 320rpx;
   left: 10rpx;
 }
 .red-select {
   width: 60rpx;
   height: 60rpx;
   position: absolute;
-  top:140rpx;
+  top:440rpx;
   left:25rpx;
 }
 .red-select.color_select {
   width: 90rpx;
   height: 90rpx;
-  top: 120rpx;
+  top: 420rpx;
   left: 10rpx;
+}
+.slide-wrapper {
+  width: 250rpx;
+  height: 30rpx;
+  transform: rotate(90deg);
+  position: absolute;
+  top: 160rpx;
+  left: -75rpx;
+}
+.drop {
+  width: 50rpx;
+  height: 50rpx;
+  border-radius: 50%;
+  background: #FFF;
+  position: absolute;
+  left: 0rpx;
+  top: -10rpx;
+  box-shadow: 0px 1px 5px #888888;
+}
+
+.slide {
+  width: 250rpx;
+  height: 30rpx;
 }

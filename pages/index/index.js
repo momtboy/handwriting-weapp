@@ -21,7 +21,11 @@ Page({
     lastPoint: 0,
     chirography: [], //笔迹
     currentChirography: {}, //当前笔迹
-    linePrack: [] //划线轨迹 , 生成线条的实际点
+    linePrack: [], //划线轨迹 , 生成线条的实际点
+    slideValue: 25,
+    startY: 0,
+    deltaY: 0,
+    startValue: 0,
   },
   // 笔迹开始
   uploadScaleStart (e) {
@@ -312,12 +316,70 @@ Page({
     ctx.draw(true)
   },
   selectColorEvent (event) {
-    console.log(event)
     var color = event.currentTarget.dataset.colorValue;
     var colorSelected = event.currentTarget.dataset.color;
     this.setData({
       selectColor: colorSelected,
       lineColor: color
     })
-  }
+  },
+    // 笔迹粗细滑块
+    onTouchStart(event) {
+      this.setData({
+        startY: event.touches[0].clientY,
+        startValue: this.format(this.data.slideValue)
+      });
+    },
+    onTouchMove(event) {
+      const touch = event.touches[0];
+      this.setData({
+        deltaY: touch.clientY - this.data.startY
+      })
+      this.updateValue(this.data.startValue + this.data.deltaY);
+    },
+    onTouchEnd() {
+      this.updateValue(this.data.slideValue, true);
+      let lineSize = 1;
+      let lineMin = 0.5;
+      let lineMax = 4;
+      switch(this.data.slideValue) {
+        case 0:
+          lineSize = 0.1;
+          lineMin = 0.1;
+          lineMax = 0.1;
+          break;
+        case 25:
+          break;
+        case 50:
+          lineSize = 2;
+          lineMin = 1;
+          lineMax = 4;
+          break;
+        case 75:
+          lineSize = 3;
+          lineMin = 1;
+          lineMax = 4;
+          break;
+        case 100:
+          lineSize = 5;
+          lineMin = 2;
+          lineMax = 5;
+          break;
+      }
+      
+      this.setData({
+        lineSize,
+        lineMin,
+        lineMax
+      })
+    },
+    updateValue(slideValue, end) {
+      slideValue = this.format(slideValue);
+      this.setData({
+        slideValue,
+      });
+    },
+    format(value) {
+      return Math.round(Math.max(0, Math.min(value, 100)) / 25) * 25;
+    }
 })
