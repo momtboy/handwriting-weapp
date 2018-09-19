@@ -1,3 +1,4 @@
+
 Page({
   // 内置数据
   canvasName: 'handWriting',
@@ -7,11 +8,11 @@ Page({
   linePrack: [], //划线轨迹 , 生成线条的实际点
   currentLine: [],
   transparent: 1, // 透明度
-  pressure: 1, // 默认压力
-  smoothness: 60,  //顺滑度，用60的距离来计算速度
-  lineSize: 1,  // 笔记倍数
+  pressure: 0.5, // 默认压力
+  smoothness: 100,  //顺滑度，用60的距离来计算速度
+  lineSize: 1.5,  // 笔记倍数
   lineMin: 0.5,   // 最小笔画半径
-  lineMax: 4,     // 最大笔画半径
+  lineMax: 2,     // 最大笔画半径
   currentPoint: {},
   firstTouch: true, // 第一次触发
   radius: 1, //画圆的半径
@@ -26,10 +27,11 @@ Page({
   data: {
     selectColor: 'black',
     lineColor: '#1A1A1A', // 颜色
-    slideValue: 25,
+    slideValue: 50,
   },
   // 笔迹开始
   uploadScaleStart (e) {
+    console.log(e.touches[0])
     if (e.type != 'touchstart') return false;
     this.ctx.setFillStyle(this.data.lineColor);  // 初始线条设置颜色
     this.ctx.setGlobalAlpha(this.transparent);  // 设置半透明
@@ -62,7 +64,6 @@ Page({
       x: e.touches[0].x,
       y: e.touches[0].y
     }
-
     //测试裁剪
     if (point.y < this.cutArea.top) {
       this.cutArea.top = point.y;
@@ -90,7 +91,7 @@ Page({
     this.currentPoint = point
     this.currentLine.unshift({
       time: new Date().getTime(),
-      dis: this.distance(this.currentPoint, this.lastPoint),
+      dis: this.distance(this.currentPoint, this.lastPoint, 'move'),
       x: point.x,
       y: point.y
     })
@@ -107,7 +108,7 @@ Page({
     this.currentPoint = point
     this.currentLine.unshift({
       time: new Date().getTime(),
-      dis: this.distance(this.currentPoint, this.lastPoint),
+      dis: this.distance(this.currentPoint, this.lastPoint, 'end'),
       x: point.x,
       y: point.y
     })
@@ -130,6 +131,7 @@ Page({
     this.ctx = wx.createCanvasContext(this.canvasName)
     var query = wx.createSelectorQuery();
     query.select('.handCenter').boundingClientRect(rect => {
+      console.log(rect)
       this.canvasWidth = rect.width;
       this.canvasHeight = rect.height;
     }).exec();
@@ -142,6 +144,7 @@ Page({
   //画两点之间的线条；参数为:line，会绘制最近的开始的两个点；
   pointToLine (line) {
     this.calcBethelLine(line);
+    // this.calcBethelLine1(line);
     return;
   },
   //计算插值的方式；
@@ -170,7 +173,7 @@ Page({
       y2 = y1 + (line[0].y - y1) * curveValue;
     }
     //从计算公式看，三个点分别是(x0,y0),(x1,y1),(x2,y2) ；(x1,y1)这个是控制点，控制点不会落在曲线上；实际上，这个点还会手写获取的实际点，却落在曲线上
-    len = this.distance({ x: x2, y: y2 }, { x: x0, y: y0 });
+    len = this.distance({ x: x2, y: y2 }, { x: x0, y: y0 }, 'calc');
     lastRadius = this.radius;
     for (let n = 0; n < line.length - 1; n++) {
       dis += line[n].dis;
@@ -205,13 +208,12 @@ Page({
         point = [{ x: x, y: y, r: r }];
       }
     }
-    this.currentLine = line
   },
   //求两点之间距离
-  distance (a, b) {
+  distance (a, b, type) {
     let x = b.x - a.x;
     let y = b.y - a.y;
-    return Math.sqrt(x * x + y * y);
+    return Math.sqrt(x * x + y * y) * 5;
   },
   ctaCalc (x0, y0, r0, x1, y1, r1, x2, y2, r2) {
     let a = [], vx01, vy01, norm, n_x0, n_y0, vx21, vy21, n_x2, n_y2;
@@ -273,6 +275,7 @@ Page({
     }
     this.ctx.draw(true)
   },
+  // 选择画笔颜色
   selectColorEvent (event) {
     var color = event.currentTarget.dataset.colorValue;
     var colorSelected = event.currentTarget.dataset.color;
@@ -293,9 +296,6 @@ Page({
   },
   onTouchEnd () {
     this.updateValue(this.data.slideValue, true);
-    this.lineSize = 1;
-    this.lineMin = 0.5;
-    this.lineMax = 4;
     switch (this.data.slideValue) {
       case 0:
         this.lineSize = 0.1;
@@ -303,21 +303,24 @@ Page({
         this.lineMax = 0.1;
         break;
       case 25:
+        this.lineSize = 1;
+        this.lineMin = 0.5;
+        this.lineMax = 2;
         break;
       case 50:
-        this.lineSize = 2;
+        this.lineSize = 1.5;
         this.lineMin = 1;
-        this.lineMax = 4;
+        this.lineMax = 3;
         break;
       case 75:
-        this.lineSize = 3;
-        this.lineMin = 1;
-        this.lineMax = 4;
+        this.lineSize = 1.5;
+        this.lineMin = 2;
+        this.lineMax = 3.5;
         break;
       case 100:
-        this.lineSize = 5;
+        this.lineSize = 3;
         this.lineMin = 2;
-        this.lineMax = 5;
+        this.lineMax = 3.5;
         break;
     }
   },
