@@ -1,0 +1,5 @@
+<template name="handwriting">
+  <view class="handCenter">
+    <canvas class="handWriting" disable-scroll="true" bindtouchstart="uploadScaleStart" bindtouchmove="uploadScaleMove" bindtouchend="uploadScaleEnd" bindtap="mouseDown" canvas-id="handWriting"></canvas>
+  </view>
+</template>
