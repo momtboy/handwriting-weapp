@@ -1,56 +1,55 @@
+
 Page({
+  // 内置数据
+  canvasName: 'handWriting',
+  ctx: '',
+  canvasWidth: 0,
+  canvasHeight: 0,
+  linePrack: [], //划线轨迹 , 生成线条的实际点
+  currentLine: [],
+  transparent: 1, // 透明度
+  pressure: 0.5, // 默认压力
+  smoothness: 100,  //顺滑度，用60的距离来计算速度
+  lineSize: 1.5,  // 笔记倍数
+  lineMin: 0.5,   // 最小笔画半径
+  lineMax: 2,     // 最大笔画半径
+  currentPoint: {},
+  firstTouch: true, // 第一次触发
+  radius: 1, //画圆的半径
+  cutArea: { top: 0, right: 0, bottom: 0, left: 0 }, //裁剪区域
+  lastPoint: 0,
+  chirography: [], //笔迹
+  startY: 0,
+  deltaY: 0,
+  startValue: 0,
+
+  // 视图数据
   data: {
-    canvasName: 'handWriting',
-    ctx: '',
-    canvasWidth: 0,
-    canvasHeight: 0,
-    transparent: 1, // 透明度
     selectColor: 'black',
     lineColor: '#1A1A1A', // 颜色
-    lineSize: 1.5,  // 笔记倍数
-    lineMin: 0.5,   // 最小笔画半径
-    lineMax: 4,     // 最大笔画半径
-    pressure: 1,     // 默认压力
-    smoothness: 60,  //顺滑度，用60的距离来计算速度
-    currentPoint: {},
-    currentLine: [],  // 当前线条
-    firstTouch: true, // 第一次触发
-    radius: 1, //画圆的半径
-    cutArea: { top: 0, right: 0, bottom: 0, left: 0 }, //裁剪区域
-    bethelPoint: [],  //保存所有线条 生成的贝塞尔点；
-    lastPoint: 0,
-    chirography: [], //笔迹
-    currentChirography: {}, //当前笔迹
-    linePrack: [] //划线轨迹 , 生成线条的实际点
+    slideValue: 50,
   },
   // 笔迹开始
   uploadScaleStart (e) {
+    console.log(e.touches[0])
     if (e.type != 'touchstart') return false;
-    let ctx = this.data.ctx;
-    ctx.setFillStyle(this.data.lineColor);  // 初始线条设置颜色
-    ctx.setGlobalAlpha(this.data.transparent);  // 设置半透明
-    let currentPoint = {
+    this.ctx.setFillStyle(this.data.lineColor);  // 初始线条设置颜色
+    this.ctx.setGlobalAlpha(this.transparent);  // 设置半透明
+    this.currentPoint = {
       x: e.touches[0].x,
       y: e.touches[0].y
     }
-    let currentLine = this.data.currentLine;
-    currentLine.unshift({
+    this.currentLine.unshift({
       time: new Date().getTime(),
       dis: 0,
-      x: currentPoint.x,
-      y: currentPoint.y
-    })
-    this.setData({
-      currentPoint,
-      // currentLine
+      x: this.currentPoint.x,
+      y: this.currentPoint.y
     })
     if (this.data.firstTouch) {
-      this.setData({
-        cutArea: { top: currentPoint.y, right: currentPoint.x, bottom: currentPoint.y, left: currentPoint.x },
-        firstTouch: false
-      })
+      this.cutArea = { top: this.currentPoint.y, right: this.currentPoint.x, bottom: this.currentPoint.y, left: this.currentPoint.x }
+      this.firstTouch = false
     }
-    this.pointToLine(currentLine);
+    this.pointToLine(this.currentLine);
   },
   // 笔迹移动
   uploadScaleMove (e) {
@@ -65,45 +64,38 @@ Page({
       x: e.touches[0].x,
       y: e.touches[0].y
     }
-
     //测试裁剪
-    if (point.y < this.data.cutArea.top) {
-      this.data.cutArea.top = point.y;
+    if (point.y < this.cutArea.top) {
+      this.cutArea.top = point.y;
     }
-    if (point.y < 0) this.data.cutArea.top = 0;
+    if (point.y < 0) this.cutArea.top = 0;
 
-    if (point.x > this.data.cutArea.right) {
-      this.data.cutArea.right = point.x;
+    if (point.x > this.cutArea.right) {
+      this.cutArea.right = point.x;
     }
-    if (this.data.canvasWidth - point.x <= 0) {
-      this.data.cutArea.right = this.data.canvasWidth;
+    if (this.canvasWidth - point.x <= 0) {
+      this.cutArea.right = this.canvasWidth;
     }
-    if (point.y > this.data.cutArea.bottom) {
-      this.data.cutArea.bottom = point.y;
+    if (point.y > this.cutArea.bottom) {
+      this.cutArea.bottom = point.y;
     }
-    if (this.data.canvasHeight - point.y <= 0) {
-      this.data.cutArea.bottom = this.data.canvasHeight;
+    if (this.canvasHeight - point.y <= 0) {
+      this.cutArea.bottom = this.canvasHeight;
     }
-    if (point.x < this.data.cutArea.left) {
-      this.data.cutArea.left = point.x;
+    if (point.x < this.cutArea.left) {
+      this.cutArea.left = point.x;
     }
-    if (point.x < 0) this.data.cutArea.left = 0;
+    if (point.x < 0) this.cutArea.left = 0;
 
-    this.setData({
-      lastPoint: this.data.currentPoint,
-      currentPoint: point
-    })
-    let currentLine = this.data.currentLine
-    currentLine.unshift({
+    this.lastPoint = this.currentPoint;
+    this.currentPoint = point
+    this.currentLine.unshift({
       time: new Date().getTime(),
-      dis: this.distance(this.data.currentPoint, this.data.lastPoint),
+      dis: this.distance(this.currentPoint, this.lastPoint, 'move'),
       x: point.x,
       y: point.y
     })
-    // this.setData({
-    //   currentLine
-    // })
-    this.pointToLine(currentLine);
+    this.pointToLine(this.currentLine);
   },
   // 笔迹结束
   uploadScaleEnd (e) {
@@ -112,71 +104,53 @@ Page({
       x: e.changedTouches[0].x,
       y: e.changedTouches[0].y
     }
-    this.setData({
-      lastPoint: this.data.currentPoint,
-      currentPoint: point
-    })
-    let currentLine = this.data.currentLine
-    currentLine.unshift({
+    this.lastPoint = this.currentPoint;
+    this.currentPoint = point
+    this.currentLine.unshift({
       time: new Date().getTime(),
-      dis: this.distance(this.data.currentPoint, this.data.lastPoint),
+      dis: this.distance(this.currentPoint, this.lastPoint, 'end'),
       x: point.x,
       y: point.y
     })
-    // this.setData({
-    //   currentLine
-    // })
-    if (currentLine.length > 2) {
-      var info = (currentLine[0].time - currentLine[currentLine.length - 1].time) / currentLine.length;
+    if (this.currentLine.length > 2) {
+      var info = (this.currentLine[0].time - this.currentLine[this.currentLine.length - 1].time) / this.currentLine.length;
       //$("#info").text(info.toFixed(2));
     }
     //一笔结束，保存笔迹的坐标点，清空，当前笔迹
     //增加判断是否在手写区域；
-    this.pointToLine(currentLine);
+    this.pointToLine(this.currentLine);
     var currentChirography = {
-      lineSize: this.data.lineSize,
-      lineColor: this.data.lineColor
+      lineSize: this.lineSize,
+      lineColor: this.lineColor
     };
-    var chirography = this.data.chirography
-    chirography.unshift(currentChirography);
-    this.setData({
-      chirography
-    })
-    var linePrack = this.data.linePrack
-    linePrack.unshift(this.data.currentLine);
-    this.setData({
-      linePrack,
-      currentLine: []
-    })
+    this.chirography.unshift(currentChirography);
+    this.linePrack.unshift(this.currentLine);
+    this.currentLine = []
   },
   onLoad () {
-    let canvasName = this.data.canvasName
-    let ctx = wx.createCanvasContext(canvasName)
-    this.setData({
-      ctx: ctx
-    })
+    this.ctx = wx.createCanvasContext(this.canvasName)
     var query = wx.createSelectorQuery();
     query.select('.handCenter').boundingClientRect(rect => {
-      this.setData({
-        canvasWidth: rect.width,
-        canvasHeight: rect.height
-      })
+      console.log(rect)
+      this.canvasWidth = rect.width;
+      this.canvasHeight = rect.height;
     }).exec();
   },
   retDraw () {
-    this.data.ctx.clearRect(0, 0, 700, 730)
-    this.data.ctx.draw()
+    this.ctx.clearRect(0, 0, 700, 730)
+    this.ctx.draw()
   },
 
   //画两点之间的线条；参数为:line，会绘制最近的开始的两个点；
   pointToLine (line) {
     this.calcBethelLine(line);
+    // this.calcBethelLine1(line);
     return;
   },
   //计算插值的方式；
   calcBethelLine (line) {
     if (line.length <= 1) {
-      line[0].r = this.data.radius;
+      line[0].r = this.radius;
       return;
     }
     let x0, x1, x2, y0, y1, y2, r0, r1, r2, len, lastRadius, dis = 0, time = 0, curveValue = 0.5;
@@ -199,20 +173,18 @@ Page({
       y2 = y1 + (line[0].y - y1) * curveValue;
     }
     //从计算公式看，三个点分别是(x0,y0),(x1,y1),(x2,y2) ；(x1,y1)这个是控制点，控制点不会落在曲线上；实际上，这个点还会手写获取的实际点，却落在曲线上
-    len = this.distance({ x: x2, y: y2 }, { x: x0, y: y0 });
-    lastRadius = this.data.radius;
+    len = this.distance({ x: x2, y: y2 }, { x: x0, y: y0 }, 'calc');
+    lastRadius = this.radius;
     for (let n = 0; n < line.length - 1; n++) {
       dis += line[n].dis;
       time += line[n].time - line[n + 1].time;
-      if (dis > this.data.smoothness) break;
+      if (dis > this.smoothness) break;
     }
-    this.setData({
-      radius: Math.min(time / len * this.data.pressure + this.data.lineMin, this.data.lineMax) * this.data.lineSize
-    });
-    line[0].r = this.data.radius;
+    this.radius = Math.min(time / len * this.pressure + this.lineMin, this.lineMax) * this.lineSize
+    line[0].r = this.radius;
     //计算笔迹半径；
     if (line.length <= 2) {
-      r0 = (lastRadius + this.data.radius) / 2;
+      r0 = (lastRadius + this.radius) / 2;
       r1 = r0;
       r2 = r1;
       //return;
@@ -227,28 +199,21 @@ Page({
       let t = i / (n - 1);
       let x = (1 - t) * (1 - t) * x0 + 2 * t * (1 - t) * x1 + t * t * x2;
       let y = (1 - t) * (1 - t) * y0 + 2 * t * (1 - t) * y1 + t * t * y2;
-      let r = lastRadius + (this.data.radius - lastRadius) / n * i;
+      let r = lastRadius + (this.radius - lastRadius) / n * i;
       point.push({ x: x, y: y, r: r });
       if (point.length == 3) {
         let a = this.ctaCalc(point[0].x, point[0].y, point[0].r, point[1].x, point[1].y, point[1].r, point[2].x, point[2].y, point[2].r);
         a[0].color = this.data.lineColor;
-        // let bethelPoint = this.data.bethelPoint;
-        // console.log(a)
-        // console.log(this.data.bethelPoint)
-        // bethelPoint = bethelPoint.push(a);
         this.bethelDraw(a, 1);
         point = [{ x: x, y: y, r: r }];
       }
     }
-    this.setData({
-      currentLine: line
-    })
   },
   //求两点之间距离
-  distance (a, b) {
+  distance (a, b, type) {
     let x = b.x - a.x;
     let y = b.y - a.y;
-    return Math.sqrt(x * x + y * y);
+    return Math.sqrt(x * x + y * y) * 5;
   },
   ctaCalc (x0, y0, r0, x1, y1, r1, x2, y2, r2) {
     let a = [], vx01, vy01, norm, n_x0, n_y0, vx21, vy21, n_x2, n_y2;
@@ -292,32 +257,80 @@ Page({
     return a;
   },
   bethelDraw (point, is_fill, color) {
-    let ctx = this.data.ctx;
-    ctx.beginPath();
-    ctx.moveTo(point[0].mx, point[0].my);
+    this.ctx.beginPath();
+    this.ctx.moveTo(point[0].mx, point[0].my);
     if (undefined != color) {
-      ctx.setFillStyle(color);
-      ctx.setStrokeStyle(color);
+      this.ctx.setFillStyle(color);
+      this.ctx.setStrokeStyle(color);
     } else {
-      ctx.setFillStyle(point[0].color);
-      ctx.setStrokeStyle(point[0].color);
+      this.ctx.setFillStyle(point[0].color);
+      this.ctx.setStrokeStyle(point[0].color);
     }
     for (let i = 1; i < point.length; i++) {
-      ctx.bezierCurveTo(point[i].c1x, point[i].c1y, point[i].c2x, point[i].c2y, point[i].ex, point[i].ey);
+      this.ctx.bezierCurveTo(point[i].c1x, point[i].c1y, point[i].c2x, point[i].c2y, point[i].ex, point[i].ey);
     }
-    ctx.stroke();
+    this.ctx.stroke();
     if (undefined != is_fill) {
-      ctx.fill(); //填充图形 ( 后绘制的图形会覆盖前面的图形, 绘制时注意先后顺序 )
+      this.ctx.fill(); //填充图形 ( 后绘制的图形会覆盖前面的图形, 绘制时注意先后顺序 )
     }
-    ctx.draw(true)
+    this.ctx.draw(true)
   },
+  // 选择画笔颜色
   selectColorEvent (event) {
-    console.log(event)
     var color = event.currentTarget.dataset.colorValue;
     var colorSelected = event.currentTarget.dataset.color;
     this.setData({
       selectColor: colorSelected,
       lineColor: color
     })
+  },
+  // 笔迹粗细滑块
+  onTouchStart (event) {
+    this.startY = event.touches[0].clientY;
+    this.startValue = this.format(this.data.slideValue)
+  },
+  onTouchMove (event) {
+    const touch = event.touches[0];
+    this.deltaY = touch.clientY - this.startY;
+    this.updateValue(this.startValue + this.deltaY);
+  },
+  onTouchEnd () {
+    this.updateValue(this.data.slideValue, true);
+    switch (this.data.slideValue) {
+      case 0:
+        this.lineSize = 0.1;
+        this.lineMin = 0.1;
+        this.lineMax = 0.1;
+        break;
+      case 25:
+        this.lineSize = 1;
+        this.lineMin = 0.5;
+        this.lineMax = 2;
+        break;
+      case 50:
+        this.lineSize = 1.5;
+        this.lineMin = 1;
+        this.lineMax = 3;
+        break;
+      case 75:
+        this.lineSize = 1.5;
+        this.lineMin = 2;
+        this.lineMax = 3.5;
+        break;
+      case 100:
+        this.lineSize = 3;
+        this.lineMin = 2;
+        this.lineMax = 3.5;
+        break;
+    }
+  },
+  updateValue (slideValue, end) {
+    slideValue = this.format(slideValue);
+    this.setData({
+      slideValue,
+    });
+  },
+  format (value) {
+    return Math.round(Math.max(0, Math.min(value, 100)) / 25) * 25;
   }
 })

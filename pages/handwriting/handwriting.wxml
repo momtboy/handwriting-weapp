@@ -1,0 +1,17 @@
+<import src="../../components/handwriting/handwriting.wxml" />
+<view class="wrapper">
+  <view class="handBtn">
+    <view class="slide-wrapper">
+      <view class="drop" bind:touchstart="onTouchStart" catch:touchmove="onTouchMove" bind:touchend="onTouchEnd" style="left: {{ slideValue * 2 }}rpx"></view>
+      <image class="slide" src="../../images/slide.png" />
+    </view>
+    <image catchtap="selectColorEvent" src="{{ selectColor === 'black' ? '../../images/color_black_selected.png' : '../../images/color_black.png' }}" class="{{ selectColor === 'black' ? 'color_select' : '' }} black-select" data-color="black" data-color-value="#1A1A1A"></image>
+    <image catchtap="selectColorEvent" src="{{ selectColor === 'red' ? '../../images/color_red_selected.png' : '../../images/color_red.png' }}" class="{{ selectColor === 'red' ? 'color_select' : '' }} red-select" data-color="red" data-color-value="#ca262a"></image>
+    <button catchtap="retDraw" class="delBtn">重写</button>
+    <!-- <button catchtap="subCanvas" class="subBtn">完成</button> -->
+  </view>
+  <template is="handwriting"></template>
+  <view class="handRight">
+    <view class="handTitle">手写板</view>
+  </view>
+</view>
